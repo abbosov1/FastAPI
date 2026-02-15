@@ -54,3 +54,129 @@ U - Update. Update -> Put/Patch request, here we have two types of update Put an
 
 D - Delete. Delete -> Delete request, deleting data an example for this --> @app.delete("/posts/{post_id}")
 
+
+
+
+
+                                                        Sending Requests:
+
+my_posts = [
+    {
+        "title": "My first post",
+        "content": "Yes, this post",
+        "id": 2
+    },
+    {
+        "title": "My second post",
+        "content": "No, not this post",
+        "id": 1
+    }
+]
+
+
+def find_post(id):
+    for found_post in my_posts:
+        if found_post["id"] == id:
+            return found_post
+
+
+@app.get("/posts/{id}")  |   here writen path of the how to get a single post. @app.get = method of request. ("/posts/{id}") = it' a path where we can get the post
+async def get_post(id: int): | here written name and validation for our search function.
+#                             async = working asynco; def = function; get_post = name of the function; (id: int) = parameters of a function, the id has to be int it's a validation.
+    found_post = find_post(id) | found_post = name of the variable; = = equal; find_post = we're calling the function named
+#                                find_post; (id) = give this parameter to it like what is the input and what I have to search here it will be search details of a post with this {id}
+    print(found_post)          | print output to the console
+    return {"post_detail": found_post}  | called return for the output
+
+
+@app.get("/posts/latest")   | new app for latest post
+async def get_latest_post():    | given name for function
+    latest_post = my_posts[len(my_posts) - 1]   | created variable, and it's equal to my_post .... my_post[] = called dictionary
+#                                               | len(my_post) - 1 = take the latest value of (this) dictionary
+    return {"detail": latest_post}  | called return for the output
+
+                                                        FOCUS ON THIS PART CAREFULLY
+
+    WE GAVE PARAMETER ID FOR SEARCHING SINGLE POST AND IT IS WORKING AND WHEN WE WANT TO SEARCH LATEST POST IT WILL RETURN AN ERROR
+
+                                                                BUT WHY?
+    BECAUSE UNTIL LATEST POSTS WE GAVE PARAMETER TO SEARCHING SINGLE POST SO WHEN WE CALLED LATEST POST IT FIRSTLY LOOKED FOR THE IS THERE ANY PARAMETER ABOVE OR NOT
+    AND IT COULD FIND PARAMETER INT AT SEARCHING SINGLE POST AND THE SEARCHING LATEST POST GET THAT PARAMETER TO ITSELF.
+
+    HERE WE CAN DO ONLY ONE THING TAKE THAT FUNCTION ABOVE THE SEARCHING POST BY ID
+
+    TAKE LATEST FUNCTION ABOVE THE SEARCHING POST BY ID
+
+
+
+
+
+
+
+
+@app.get("/posts/latest")
+async def get_latest_post():
+    latest_post = my_posts[len(my_posts) - 1]
+    return {"detail": latest_post}
+
+
+@app.get("/posts/{id}")
+async def get_post(id: int, response: Response):    | added another parameter response import this "from fastapi import FastAPI, Response, status"
+    found_post = find_post(id)
+    if not found_post:  | if statement, if found_post is not found
+        response.status_code = status.HTTP_404_NOT_FOUND    | used response, if the status is equal to not found 404
+        return {"detail": f"Post with id {id} not found"}   | return this output.
+    return {"post_detail": found_post}                      | this gonna be like an else statement.
+
+
+
+and also we can replace:
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return {"detail": f"Post with id {id} not found"}
+with:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id {id} not found")
+
+
+
+
+
+
+
+
+
+my_posts = [
+    {
+        "title": "My first post",
+        "content": "Yes, this post",
+        "id": 2
+    },
+    {
+        "title": "My second post",
+        "content": "No, not this post",
+        "id": 1
+    }
+]
+
+
+
+@app.post("/posts")
+async def create_post(post: Post):
+    post_dict = post.dict()
+    post_dict['id'] = randrange(0, 1000000)
+    my_posts.append(post_dict)
+    return {"data": post_dict}
+
+
+HERE WE CAN SEE DICTIONARY WITH DATA AND FUNCTION FOR CREATING POSTS THEY'RE STAYING CORRECT AND THEY'RE WORKING BUT THERE IS ONE ISSUE
+HERE WHEN WE CREATE ANY POST CODE OF REQUEST WILL BECOME 200 BUT IT HAS TO BE 201, SO WE HAVE TO CHANGE THE CODE TO THIS:
+
+
+
+
+
+@app.post("/posts", status_code=status.HTTP_201_CREATED)
+async def create_post(post: Post):
+    post_dict = post.dict()
+    post_dict['id'] = randrange(0, 1000000)
+    my_posts.append(post_dict)
+    return {"data": post_dict}
