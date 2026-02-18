@@ -180,3 +180,225 @@ async def create_post(post: Post):
     post_dict['id'] = randrange(0, 1000000)
     my_posts.append(post_dict)
     return {"data": post_dict}
+
+
+
+
+
+
+
+
+
+                                    Working with postgres
+download postgres and pgAdmin open pgAdmin there will be password ect. ect. ect. so I think you can understand how to open and run it.
+So the first thing what we will do is:
+    pgAdmin:
+
+        Servers → with right button → Register → Server
+        General tab:
+
+        Name: Postgres (Admin)
+
+
+        Connection tab:
+
+        Host: localhost
+        Port: 5432
+        Username: postgres
+        Maintenance database: postgres
+        Password: (what you want)
+
+
+        Save
+
+
+
+                            Postgres in terminal:
+open - sudo -u username psql or psql -U username
+open the directory -psql -U username -d db_name
+
+-U -> пользователь (User)
+-d -> база данных (Database)
+-h -> хост (Host)
+-p -> порт (Port)
+-W -> спросить пароль(Ask password)
+
+list of the dbs -> psql -U username -l (without entering to the db)
+SQL request -> psql -U username -c "SELECT * FROM users;"
+
+
+Connection and information:
+
+\q -- log out of psql
+\l -- list of all databases
+\c dbname -- connect to the database
+\conninfo -- information about the current connection
+\du -- list of users and roles
+\dn -- list of schemas
+
+
+Tables:
+
+\dt -- list of tables
+\dt *.* -- list of all tables in all schemas
+\d tablename -- table structure (columns, types)
+\di -- list of indexes
+\dv -- list of views
+\ds -- list of sequences
+
+HELP:
+
+\h -- list of all SQL commands
+\h CREATE TABLE -- help for a specific command
+\? -- list of all \ commands
+
+
+SQL commands:
+
+CREATE DATABASE mydb;
+DROP DATABASE mydb;
+
+
+Users:
+
+CREATE USER username WITH PASSWORD 'pass';
+ALTER USER username WITH SUPERUSER;
+ALTER USER username WITH PASSWORD 'newpass';
+DROP USER username;
+
+
+Tables:
+
+-- Create a table
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100),
+    email VARCHAR(100) UNIQUE,
+    age INT,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Delete the table
+DROP TABLE users;
+
+-- Change the table
+ALTER TABLE users ADD COLUMN phone VARCHAR(20);
+ALTER TABLE users DROP COLUMN phone;
+ALTER TABLE users RENAME COLUMN name TO full_name;
+
+
+CRUD operations:
+
+-- Add data
+INSERT INTO users (name, email, age) VALUES ('Name', 'ab@mail.com', 25);
+
+-- Get the data
+SELECT * FROM users;
+SELECT name, email FROM users;
+SELECT * FROM users WHERE age > 20;
+SELECT * FROM users ORDER BY name ASC;
+SELECT * FROM users ORDER BY name DESC;
+SELECT * FROM users LIMIT 10;
+
+-- Update the data
+UPDATE users SET age = 26 WHERE name = 'Name';
+
+-- Delete data
+DELETE FROM users WHERE id = 1;
+DELETE FROM users; -- удалить все записи
+
+
+Filtering:
+
+WHERE age > 20
+WHERE name = 'Name'
+WHERE name LIKE 'Ab%'        -- starts with Ab
+WHERE age BETWEEN 20 AND 30
+WHERE name IN ('Ali', 'Bob')
+WHERE email IS NULL
+WHERE email IS NOT NULL
+
+
+Aggregate functions:
+
+SELECT COUNT(*) FROM users;
+SELECT MAX(age) FROM users;
+SELECT MIN(age) FROM users;
+SELECT AVG(age) FROM users;
+SELECT SUM(age) FROM users;
+SELECT name, COUNT(*) FROM users GROUP BY name;
+
+
+JOIN (объединение таблиц):
+
+-- INNER JOIN
+SELECT users.name, orders.product
+FROM users
+INNER JOIN orders ON users.id = orders.user_id;
+
+-- LEFT JOIN
+SELECT users.name, orders.product
+FROM users
+LEFT JOIN orders ON users.id = orders.user_id;
+
+
+Indexes:
+
+CREATE INDEX idx_name ON users(name);
+DROP INDEX idx_name;
+
+
+Rights:
+
+GRANT ALL PRIVILEGES ON DATABASE mydb TO username;
+GRANT SELECT, INSERT ON users TO username;
+REVOKE ALL ON users FROM username;
+
+
+Transactions:
+
+BEGIN;           -- start a transaction
+
+COMMIT;          -- save changes
+
+ROLLBACK;        -- undo changes
+
+
+SELECT id AS product_id, is_sale AS on_sale FROM products;
+
+here with this request we'll get id and is_sale columns with given another names for example here id returns to product_id is_sale to on_sale.
+
+
+SELECT * FROM products WHERE id = 5; --> take the all data from products but only the product with id 5;
+
+SELECT * FROM products WHERE name = 'something'; --> take the all data from products but only the product with name something;
+U CAN USE ONLY SINGLE QUOTES. .
+AND ALSO WE CAN USE >, <, >=, <= for integer data.
+
+
+SELECT * FROM products WHERE name != 'TV' and price != 250;
+
+SELECT * FROM products WHERE id IN (1,2,3);
+
+SELECT * FROM products WHERE id LIKE 'TV%';  --> Select all the data which starts with 'TV' and after that any characters=%
+
+SELECT * FROM products WHERE id LIKE '%e';   --> Select all the data which starts with any characters=% and ends with 'e'
+
+SELECT * FROM products WHERE id NOT LIKE '%e';   --> Select all the data which starts with any characters=% and doesn't end with 'e'
+
+SELECT * FROM products WHERE id LIKE '%e%';   --> Select all the data which starts with any characters=% and ends with any characters=% and exists 'e' anywhere
+
+SELECT * FROM products WHERE id NOT LIKE '%e';   --> Select all the data which starts with any characters=% and ends with any characters=% and doesn't exist 'e' anywhere of the requested data
+for example -> select it won't be at output because it has e in the letters if it starts with e or ends with it is okay but if it's not there, and it's in letters it won't be returned.
+
+SELECT * FROM products where price < 10 limit 3;
+
+SELECT * FROM products order by id limit 5 offset 2; first 2 item will be skipped.
+
+While working with CRUD in postgres if you get error: TypeError: 'int' object does not support indexing change this:
+
+    cursor.execute(""" SELECT * FROM posts WHERE id = %s """, (id,))
+
+    to this:
+
+    cursor.execute(""" SELECT * FROM posts WHERE id = %s """, (str(id),))
